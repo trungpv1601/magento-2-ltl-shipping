@@ -1,0 +1,23 @@
+{
+	"name": "trungpv1601/magento-2-ltl-shipping",
+	"description": "Magento 2 LTL Shipping Module",
+	"type": "magento2-module",
+	"license": "MIT",
+	"version": "1.0.0",
+	"authors": [
+		{
+			"email": "trungpv1601@gmail.com",
+			"name": "trungpv"
+		}
+  ],
+  "minimum-stability": "dev",
+	"require": {},
+	"extra": {
+		"map": [
+			[
+				"*",
+				"Trungpv1601/Magento2LTLShipping"
+			]
+		]
+	}
+}
