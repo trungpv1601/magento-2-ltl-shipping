@@ -10,6 +10,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     \Magento\Shipping\Model\Carrier\CarrierInterface
 {
     const RATE_SERVICE_URL = 'https://api.rlcarriers.com/1.0.3/RateQuoteService.asmx?WSDL';
+    const RATE_SERVICE_URL_ODFL = 'https://www.odfl.com/wsRate_v4/RateService/WEB-INF/wsdl/RateService.wsdl';
 
     private $apiKey = false;
 
@@ -135,37 +136,31 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                 'orig_region_id' => $orig_region_id,
                 'orig_region_code' => $orig_region_code,
                 'weight' => $weight,
-                'apiKey' => $this->apiKey
+                'apiKey' => $this->apiKey,
+                'username' => $this->getConfigData('odfl_username'),
+                'password' => $this->encryptor->decrypt($this->getConfigData('odfl_password')),
+                'account_number' => $this->getConfigData('odfl_account_number'),
             ];
 
             $data = array_merge($destLocation, $origLocation);
 
-            $shippingQuote =  $this->getRateQuoteService($data);
-            $shippingMethods = $this->getShippingRates($shippingQuote);
+            $price =  $this->getRLCarriers($data);
+            if (!$price) {
+                $price =  $this->getODFL($data);
+            }
 
-            if ($shippingMethods) {
-                $shippingMethod = $shippingMethods[0][0];
-                // Remove api provided '$' from string
-                $price = ltrim($shippingMethod->NetCharge, '$');
-
+            if ($price) {
                 // * @var \Magento\Quote\Model\Quote\Address\RateResult\Method $method 
                 $method = $this->_rateMethodFactory->create();
 
                 $method->setCarrier($this->_code);
                 $method->setCarrierTitle($this->getConfigData('title'));
 
-                $method->setMethod($shippingMethod->Code);
+                $method->setMethod($this->_code);
+                $method->setMethodTitle($this->getConfigData('name'));
 
-                if (isset($shippingMethod->HourlyWindow)) {
-                    $method->setMethodTitle($shippingMethod->Title
-                        . ': Between ' .
-                        $shippingMethod->HourlyWindow->Start
-                        . ' - ' .
-                        $shippingMethod->HourlyWindow->End);
-                } else {
-                    $method->setMethodTitle($shippingMethod->Title);
-                }
-
+                $additionalFees = $this->getConfigData('additional_fees') ? (float) $this->getConfigData('additional_fees') / 100 : 1;
+                $price = $price + ($price * $additionalFees);
                 $method->setPrice($price);
                 $method->setCost($price);
 
@@ -177,6 +172,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
             $this->_logger->critical('Error message', ['exception' => $e]);
             return false;
         }
+        return false;
     }
 
     /**
@@ -231,7 +227,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
                 'Items' => [
                     [
                         'Class' => 200.0,
-                        'Weight' => 100,
+                        'Weight' => $payload['weight'],
                         'Width' => 0,
                         'Height' => 0,
                         'Length' => 0,
@@ -245,6 +241,48 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         ];
 
         return $client->GetRateQuote($ratesRequest);
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param [type] $payload
+     * @return void
+     */
+    private function getRateQuoteServiceODFL($payload)
+    {
+        if ($payload['dest_country_id'] == 'US') {
+            $payload['dest_country_id'] = 'USA';
+        }
+
+        if ($payload['orig_country_id'] == 'US') {
+            $payload['orig_country_id'] = 'USA';
+        }
+
+        $client = $this->clientFactory->create(self::RATE_SERVICE_URL_ODFL);
+
+        $ratesRequest = [
+            'arg0' => [
+                'destinationCountry' => $payload['dest_country_id'],
+                'destinationPostalCode' => $payload['dest_postcode'],
+                'destinationCity' => $payload['dest_city'],
+                'destinationState' => $payload['dest_region_code'],
+                'freightItems' => [
+                    'ratedClass' => '200',
+                    'weight' => $payload['weight'],
+                ],
+                'odfl4MePassword' => $payload['password'],
+                'odfl4MeUser' => $payload['username'],
+                'odflCustomerAccount' => $payload['account_number'],
+                'originCountry' => $payload['orig_country_id'],
+                'originPostalCode' => $payload['orig_postcode'],
+                'originCity' => $payload['orig_city'],
+                'originState' => $payload['orig_region_code'],
+                'requestReferenceNumber' => false
+            ]
+        ];
+
+        return $client->getLTLRateEstimate($ratesRequest)->return;
     }
 
     /**
@@ -264,6 +302,59 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         $shippingRates = $shippingRates->GetRateQuoteResult->Result->ServiceLevels->ServiceLevel;
 
         return [$shippingRates, $messages];
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param [type] $payload
+     * @return void
+     */
+    private function getRLCarriers($payload)
+    {
+        $result = false;
+        try {
+
+            $shippingQuote =  $this->getRateQuoteService($payload);
+            $shippingMethods = $this->getShippingRates($shippingQuote);
+
+            if ($shippingMethods) {
+                $shippingMethod = $shippingMethods[0][0];
+                // Remove api provided '$' from string
+                $price = ltrim($shippingMethod->NetCharge, '$');
+                $result = $price;
+            }
+        } catch (\Exception $e) {
+            $this->_logger->critical('Error message', ['exception' => $e]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param [type] $payload
+     * @return void
+     */
+    private function getODFL($payload)
+    {
+        $result = false;
+        try {
+            $shippingQuote =  $this->getRateQuoteServiceODFL($payload);
+            if ($shippingQuote->success) {
+                $rateEstimate = $shippingQuote->rateEstimate;
+                if ($rateEstimate->netFreightCharge > 0) {
+                    $result = $rateEstimate->netFreightCharge;
+                }
+            } else {
+                $this->_logger->critical('Error message', ['exception' => $shippingQuote->errorMessages]);
+            }
+        } catch (\Exception $e) {
+            $this->_logger->critical('Error message', ['exception' => $e]);
+        }
+
+        return $result;
     }
 
     protected function _doShipmentRequest(\Magento\Framework\DataObject $request)

@@ -7,8 +7,8 @@
                 <sallowspecific>0</sallowspecific>
                 <model>Trungpv1601\Magento2LTLShipping\Model\Carrier\Shipping</model>
                 <name>LTL</name>
-                <price>10.00</price>
-                <title>LTL</title>
+                <additional_fees>10%</additional_fees>
+                <title>Standard Service</title>
                 <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
                 <handling_type>T</handling_type>
             </ltl>
