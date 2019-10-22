@@ -3,16 +3,11 @@
  * See COPYING.txt for license details.
  */
 /*global define*/
-define(
-  [],
-  function () {
-      "use strict";
-      return {
-          getRules: function() {
-              return {
-
-              };
-          }
-      };
-  }
-);
+define([], function() {
+    "use strict";
+    return {
+        getRules: function() {
+            return {};
+        }
+    };
+});
