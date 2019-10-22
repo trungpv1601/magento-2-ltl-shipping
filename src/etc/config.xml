@@ -2,16 +2,16 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
         <carriers>
-            <simpleshipping>
+            <ltl>
                 <active>1</active>
                 <sallowspecific>0</sallowspecific>
-                <model>Trungpv1601/Magento2LTLShipping\Model\Carrier\Shipping</model>
-                <name>Sample Shipping Method</name>
+                <model>Trungpv1601\Magento2LTLShipping\Model\Carrier\Shipping</model>
+                <name>LTL</name>
                 <price>10.00</price>
-                <title>Sample Shipping Method</title>
+                <title>LTL</title>
                 <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
-                <handling_type>F</handling_type>
-            </simpleshipping>
+                <handling_type>T</handling_type>
+            </ltl>
         </carriers>
     </default>
 </config>
