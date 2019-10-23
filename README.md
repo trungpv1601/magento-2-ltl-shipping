@@ -1,5 +1,7 @@
 # Magento 2 LTL Shipping Module
 
+> *WARNING THIS IS A SAMPLE CODE. MAKE SURE YOU READ ALL OF THEM AND USE FOR YOUR OWN. THANKS*
+
 ## 1. Setup 
 
 Use modman [https://github.com/colinmollenhour/modman](https://github.com/colinmollenhour/modman)
