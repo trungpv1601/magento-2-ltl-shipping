@@ -26,6 +26,5 @@ define([
         "ltl",
         ltlShippingProviderShippingRatesValidationRules
     );
-    console.log("TEST");
     return Component;
 });

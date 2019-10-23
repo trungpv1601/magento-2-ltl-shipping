@@ -3,7 +3,6 @@
 namespace Trungpv1601\Magento2LTLShipping\Model\Carrier;
 
 use Magento\Quote\Model\Quote\Address\RateRequest;
-use Magento\Shipping\Model\Rate\Result;
 use Magento\Framework\Xml\Security;
 
 class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline implements
@@ -32,13 +31,23 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     protected $clientFactory;
 
     /**
-     * Undocumented function
+     * __construct function
      *
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory
      * @param \Psr\Log\LoggerInterface $logger
-     * @param \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory
+     * @param Security $xmlSecurity
+     * @param \Magento\Shipping\Model\Simplexml\ElementFactory $xmlElFactory
+     * @param \Magento\Shipping\Model\Rate\ResultFactory $rateFactory
      * @param \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory
+     * @param \Magento\Shipping\Model\Tracking\ResultFactory $trackFactory
+     * @param \Magento\Shipping\Model\Tracking\Result\ErrorFactory $trackErrorFactory
+     * @param \Magento\Shipping\Model\Tracking\Result\StatusFactory $trackStatusFactory
+     * @param \Magento\Directory\Model\RegionFactory $regionFactory
+     * @param \Magento\Directory\Model\CountryFactory $countryFactory
+     * @param \Magento\Directory\Model\CurrencyFactory $currencyFactory
+     * @param \Magento\Directory\Helper\Data $directoryData
+     * @param \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
      * @param array $data
      * @param \Magento\Framework\Encryption\EncryptorInterface $encryptor
      * @param \Magento\Directory\Model\RegionFactory $regionModel
@@ -95,16 +104,22 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     public function getAllowedMethods()
     { }
 
-
-
+    /**
+     * processAdditionalValidation function
+     *
+     * @param \Magento\Framework\DataObject $request
+     * @return void
+     */
     public function processAdditionalValidation(\Magento\Framework\DataObject $request)
     {
         return true;
     }
 
     /**
+     * collectRates function
+     *
      * @param RateRequest $request
-     * @return bool|Result
+     * @return void
      */
     public function collectRates(RateRequest $request)
     {
@@ -176,7 +191,10 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     }
 
     /**
-     * Load Dest Location
+     * loadDestLocation function
+     *
+     * @param [type] $request
+     * @return void
      */
     private function loadDestLocation($request)
     {
@@ -198,7 +216,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     }
 
     /**
-     * Undocumented function
+     * getRateQuoteService function
      *
      * @param [type] $payload
      * @return void
@@ -244,7 +262,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     }
 
     /**
-     * Undocumented function
+     * getRateQuoteServiceODFL function
      *
      * @param [type] $payload
      * @return void
@@ -286,11 +304,10 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     }
 
     /**
+     * getShippingRates function
      *
-     * Capture shipping method options
-     *
-     * @param object $shippingMethods
-     * @return array|bool
+     * @param [type] $shippingRates
+     * @return void
      */
     protected function getShippingRates($shippingRates)
     {
@@ -305,7 +322,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     }
 
     /**
-     * Undocumented function
+     * getRLCarriers function
      *
      * @param [type] $payload
      * @return void
@@ -332,7 +349,7 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
     }
 
     /**
-     * Undocumented function
+     * getODFL function
      *
      * @param [type] $payload
      * @return void
@@ -357,6 +374,12 @@ class Shipping extends \Magento\Shipping\Model\Carrier\AbstractCarrierOnline imp
         return $result;
     }
 
+    /**
+     * _doShipmentRequest function
+     *
+     * @param \Magento\Framework\DataObject $request
+     * @return void
+     */
     protected function _doShipmentRequest(\Magento\Framework\DataObject $request)
     { }
 }
